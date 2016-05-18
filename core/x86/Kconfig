@@ -1,0 +1,5 @@
+config X86
+	bool "x86"
+
+source "core/x86/intel/Kconfig"
+source "core/x86/quark/Kconfig"

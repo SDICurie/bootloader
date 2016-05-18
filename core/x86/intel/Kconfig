@@ -1,0 +1,7 @@
+menu "Generic"
+depends on X86
+
+config BOOTSTRAP
+bool "16bit boot mode"
+depends on X86
+endmenu

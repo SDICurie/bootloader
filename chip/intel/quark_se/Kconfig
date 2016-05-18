@@ -1,0 +1,10 @@
+if CHIP_NAME = "quark_se"
+	 menu "Advanced setup"
+	     config SENSOR_CORE_HELPER
+		 bool "Enable sensor core helper"
+		 depends on HARDWARE_CHARGING
+		 help
+		     Use minimal binary on sensor core to access ADC block
+		     ADC block is only accessible from sensor core on Quark SE
+	 endmenu
+endif

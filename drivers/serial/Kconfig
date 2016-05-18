@@ -1,0 +1,17 @@
+if SERIAL
+	config NS16550
+		bool "NS16550 support"
+		depends on SERIAL
+		help
+			Uart driver used for xmodem or printk console
+
+	config XMODEM
+		bool "xmodem support"
+		depends on SERIAL
+		help
+			Enable xmodem protocol used for flashing bootloader
+
+endif
+
+comment "Serial support disabled"
+	depends on !SERIAL

@@ -1,0 +1,7 @@
+config CHIP_VENDOR
+	string "Chip/SoC vendor"
+
+config CHIP_NAME
+	string "Chip/SoC name"
+
+source chip/intel/Kconfig

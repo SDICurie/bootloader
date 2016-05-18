@@ -1,0 +1,9 @@
+if MISC
+	config SWD
+		bool "SWD flashing driver"
+		help
+			Used to flash Bluetooth Nordic IC
+endif
+
+comment "MISC support disabled"
+depends on !MISC

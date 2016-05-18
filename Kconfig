@@ -1,0 +1,145 @@
+mainmenu "Bootloader configuration"
+
+menu "Chip"
+	source "chip/Kconfig"
+endmenu
+
+menu "Core"
+	source "core/Kconfig"
+endmenu
+
+menu "Device Drivers"
+	source "drivers/Kconfig"
+endmenu
+
+source "common/Kconfig"
+
+
+menuconfig MANUFACTURING
+	bool "Manufacturing support"
+
+if MANUFACTURING
+	config FACTORY_BOOT
+		bool "Factory boot support"
+endif
+
+menuconfig DEBUG
+	bool "Debug options"
+
+if DEBUG
+	menuconfig PANIC
+		bool "Panic support"
+
+	if PANIC
+	config PANIC_DUMP
+		bool "Store panic on embedded flash"
+		help
+			Search if panic trace is present on ram and dump it into flash
+	endif
+
+	comment "Debug options disabled"
+		depends on !PANIC
+
+	config SYSTEM_EVENTS
+		bool "System events"
+
+	config PROFILING
+		bool "profiling support"
+
+	config PRINTK
+		bool "printk support"
+		depends on SERIAL
+
+	config BOOT_SSBL_DISABLED
+		bool "Disable jump in second stage"
+		default n
+
+	config DEBUG_RAMDUMP_SERIAL
+		bool "ramdump support"
+		depends on SERIAL
+
+	menuconfig USB_DEBUG
+		bool "Debug USB"
+
+		if USB_DEBUG
+		config USB_DEBUG_EP0
+			bool "Debug USB endpoint 0"
+		endif
+endif
+
+comment "Debug options disabled"
+	depends on !DEBUG
+
+menuconfig SECURITY
+	bool "Security options"
+
+if SECURITY
+	config SECURE_BOOT_SSBL
+			bool "SSBL secure boot"
+			help
+				FSBL verifies SSBL image signature before booting
+			default n
+
+	config SECURE_BOOT
+			bool "Application secure boot"
+			help
+				SSBL verifies OS image signature before booting
+
+	config SECURE_UPDATE
+		bool "Secure update"
+		help
+			SSBL verifies OTA package signature before updating
+endif
+
+comment "Security options disabled"
+	depends on !SECURITY
+
+menuconfig CRYPTO
+	bool "Cryptographic support"
+
+if CRYPTO
+	config SHARE_CRYPTO
+		bool "Share crypto capabilities"
+
+	config CRYPTO_SHA256
+		bool "SHA256 digest algorithm"
+
+	config CRYPTO_ECDSA
+		bool "ECC digital signature algorithm"
+endif
+
+comment "Cryptographic support disabled"
+	depends on !CRYPTO
+
+menuconfig LIBRARY_ROUTINES
+	bool "Library routines"
+
+if LIBRARY_ROUTINES
+	config COMP_LZG
+		bool "LZG decompression support"
+		depends on OTA
+		help
+			OTA package can be compressed to optimize transfer time
+
+	config CRC16_CCITT
+		depends on XMODEM
+		default y
+		bool "CRC16 CCITT support"
+		help
+			CRC16 CCITT algorithm
+
+	config CRC32
+		depends on OTA
+		default y
+		bool "CRC32 support"
+		help
+			CRC32 algorithm
+
+endif
+
+comment "Library routines support disabled"
+	depends on !LIBRARY_ROUTINES
+
+config SIGNATURE_HEADER_SIZE
+	hex "Signature header size"
+	default 0x80

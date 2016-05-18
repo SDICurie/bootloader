@@ -1,0 +1,32 @@
+if LED
+	menuconfig LP5562
+		bool "LP5562 support"
+		select I2C
+		select SOC_LED
+
+	config SOC_LED
+		bool "SoC LED"
+
+	config LP5562_I2C
+		int "i2c port"
+		default 1
+
+	config LP5562_MINIMAL
+		bool "Minimal support"
+		depends on LP5562
+
+	config LP5562_PATTERN
+		bool "Pattern support"
+		depends on LP5562
+		select LP5562_MINIMAL
+
+	config PLAY_BOOT_PATTERN
+		bool "Notify boot"
+		depends on LP5562_PATTERN
+
+	comment "LP5562 support disabled"
+		depends on !LP5562
+endif
+
+comment "LED support disabled"
+	depends on !LED

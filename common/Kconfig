@@ -1,0 +1,148 @@
+menu "General setup"
+	menu "Binary setup"
+
+		menuconfig CUSTOM_LINKER_SCRIPT
+			bool "Custom linker script"
+			if CUSTOM_LINKER_SCRIPT
+				config LINKER_SCRIPT
+					string "Linker script"
+					default "$(BOOTLOADER_ROOT)/board/"
+			endif
+
+		config BIN_FORMAT
+			bool "Enable binary format"
+
+		config XIP
+			bool "Enable XIP"
+
+		config LOAD_ADDRESS
+			hex "Load address (flash/rom origin)"
+			default 0x00000000
+
+		config BINARY_LENGTH
+			hex "Maximum binary length"
+			default 0x00000000
+
+		config RAM_START_ADDRESS
+			hex "RAM start address"
+			default 0x00000000
+
+		config RAM_MAXIMUM_SIZE
+			hex "RAM maximum size"
+			default 0x00000000
+	endmenu
+
+	config BALLOC
+		bool "balloc support"
+
+	config USB_DFU_VID
+		hex "Usb dfu VID"
+		depends on USB_DFU
+		default "0x8087"
+
+	config USB_DFU_PID
+		hex "Usb dfu PID"
+		default "0x0a99"
+		depends on USB_DFU
+
+	config HARDWARE_CHARGING
+		bool "Hardware charging"
+
+	config BATT_THRESHOLD_MV
+		int "Hardware charging threshold"
+		default 3300
+		depends on HARDWARE_CHARGING
+		help
+			Hardware charging threshold (mV)
+
+	config DNX
+		bool "DnX support"
+		depends on USB_DFU || XMODEM
+
+	config DNX_TIMEOUT_S
+		int "USB DnX timeout"
+		default 10
+		depends on USB_DFU
+
+	config XMODEM_PACKET_SIZE
+			int "xmodem packet size"
+			default 1024
+			depends on XMODEM
+			help
+				Possible values are 1024, 128
+
+	config QUIRKS_FEATURES
+		bool "Enable quirks and features support"
+			help
+				Quirks and Features are a mechanism where bootloader uses boardid (or equivalent)
+				to enable/disable quirks, features and workarounds that are board specific.
+
+				Rational being to avoid spreading boardid switches in the code, as it is error-prone
+				and becomes quickly unmaintainable.
+
+endmenu
+
+menuconfig OPTION_UPDATE
+	bool "Firmware update options"
+
+if OPTION_UPDATE
+	config OTA
+		bool "OTA support"
+		default n
+
+	config USB_DFU
+		bool "DFU support"
+
+	if USB_DFU
+		menu "DFU alternates"
+			config CACHE_PARTITION
+				bool "cache"
+				depends on SPI_FLASH
+				help
+					Spi Flash partition used to store ota package
+
+			config LOG_PARTITION
+				bool "log"
+				depends on SPI_FLASH
+				help
+					Spi Flash partition used to store log. Partition overlaps cache partition
+
+			config SPI_FLASH_APP_DATA_PARTITION
+				bool "application data"
+				depends on SPI_FLASH
+				help
+					Spi Flash partition used to store apps datas
+
+			config SPI_FLASH_SYS_EVENT_PARTITION
+				bool "system event"
+				depends on SPI_FLASH
+				help
+					Spi Flash partition used to store systems events history
+
+			config SPI_FLASH_USER_DATA_PARTITION
+				bool "user data"
+				depends on SPI_FLASH
+				help
+					Spi Flash partition used to store user datas
+
+		endmenu
+	endif
+endif
+
+comment "Update options disabled"
+	depends on !OPTION_UPDATE
+
+menuconfig BOOT_OPTION
+	bool "Boot options"
+	default y
+if BOOT_OPTION
+
+	config ADVANCED_BOOT
+		bool "Advanced boot"
+
+	config PLAY_BOOT_PATTERN
+		bool "Enable boot notification"
+endif
+
+comment "Boot options disabled"
+	depends on !BOOT_OPTION

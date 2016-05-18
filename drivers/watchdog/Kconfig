@@ -1,0 +1,12 @@
+menuconfig WATCHDOG
+	bool "Watchdog support"
+
+if WATCHDOG
+	 config WATCHDOG_TIMEOUT
+		 int "Timeout"
+		 default 10
+		 depends on WATCHDOG
+endif
+
+comment "Watchdog support disabled"
+	depends on !WATCHDOG

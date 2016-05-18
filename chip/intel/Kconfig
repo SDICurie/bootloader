@@ -1,0 +1,40 @@
+menuconfig CLOCK
+	bool "Clock setup"
+
+	if CLOCK
+		config CLOCK_SPEED
+		int "Clock speed"
+		default 0
+	endif
+
+menuconfig OSCILLATOR
+	bool "Oscillator setup"
+
+	if OSCILLATOR
+		choice
+			prompt "Source"
+			default INTERNAL_OSCILLATOR
+
+		config INTERNAL_OSCILLATOR
+			bool "Internal"
+
+		config EXTERNAL_OSCILLATOR
+			bool "External"
+		endchoice
+
+		choice
+			prompt "Define value"
+			default FACTORY_OSCILLATOR_TRIM_VALUE
+			depends on INTERNAL_OSCILLATOR
+
+		config FACTORY_OSCILLATOR_TRIM_VALUE
+			bool "Factory"
+			depends on INTERNAL_OSCILLATOR
+
+		config CUSTOM_OSCILLATOR_TRIM_VALUE
+			hex "Custom"
+			depends on INTERNAL_OSCILLATOR
+		endchoice
+	endif
+
+-source "chip/intel/*/Kconfig"

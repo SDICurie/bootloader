@@ -1,0 +1,6 @@
+menu "Quark"
+depends on X86
+
+config CORE_QUARK
+	bool "Enable Quark"
+endmenu

@@ -1,0 +1,102 @@
+source "drivers/watchdog/Kconfig"
+
+menuconfig USB
+	bool "USB support"
+	source "drivers/usb/Kconfig"
+
+menuconfig LED
+	bool "LED support"
+	source "drivers/led/Kconfig"
+
+menuconfig MISC
+	bool "Misc drivers"
+	source "drivers/swd/Kconfig"
+
+menuconfig MTD
+	bool "MTD support"
+	source "drivers/mtd/Kconfig"
+
+menuconfig SERIAL
+	bool "Serial support"
+	select UART
+	source "drivers/serial/Kconfig"
+
+config D_FLIP_FLOP
+	bool "Flip flop support"
+
+if D_FLIP_FLOP
+	config D_FF_D_PIN
+		int "Flip flop input pin"
+		depends on D_FLIP_FLOP
+		default 14
+
+	config D_FF_CK_PIN
+		int "Flip flop clock pin"
+		depends on D_FLIP_FLOP
+		default 11
+endif
+
+
+#
+# Menuconfig SPI
+#
+menuconfig SPI
+	bool "SPI Support"
+	help
+		SPI support
+if SPI
+	config SPI_MASTER
+		bool "Master support"
+
+	config SPI_MASTER_INTERFACE
+		int "Interface"
+		default 0
+		depends on SPI_MASTER
+
+	comment "SPI master support disabled"
+	depends on !SPI_MASTER
+endif
+
+comment "SPI support disabled"
+	depends on !SPI
+
+#
+# Menuconfig I2C
+#
+menuconfig I2C
+	bool "I2C support"
+	help
+		I2C support
+if I2C
+	config I2C_PORT_SELECT
+		bool "I2C port selection"
+	config I2C_PORT
+		int "Interface"
+		default 0
+		depends on I2C_PORT_SELECT
+	config I2C_READ
+		bool "Read functions"
+		default n
+endif
+
+comment "I2C support disabled"
+depends on !I2C
+
+#
+# Menuconfig UART
+#
+config UART
+	bool "UART support"
+	help
+		Uart driver used for xmodem or printk console
+
+#
+# Menuconfig GPIO
+#
+config GPIO
+	bool "GPIO support"
+	help
+		GPIO support
+
+
+

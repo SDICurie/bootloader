@@ -1,0 +1,34 @@
+if MTD
+	menuconfig SPI_FLASH
+		bool "SNOR support (SPI Flash)"
+		depends on SPI
+
+	config SPI_FLASH_MX25
+		bool "MX25 family"
+
+	choice
+		prompt "Spi flash vendor"
+		default SPI_FLASH_MX25U12835F
+		depends on SPI_FLASH
+		help
+			Select spi flash driver
+
+		config SPI_FLASH_W25Q16DV
+			bool "SPI NOR Flash Winbond W25Q16DV on Intel QRK"
+			select SPI_FLASH_MX25
+
+		config SPI_FLASH_MX25U12835F
+			bool "SPI NOR Flash Macronix MX25U12835F on Intel QRK"
+			select SPI_FLASH_MX25
+
+		config SPI_FLASH_MX25R1635F
+			bool "SPI NOR Flash Macronix MX25R1635F on Intel QRK"
+			select SPI_FLASH_MX25
+	endchoice
+
+	comment "SNOR support disabled"
+		depends on !SPI_FLASH
+endif
+
+comment "MTD support disabled"
+	depends on !MTD

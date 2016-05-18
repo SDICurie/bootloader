@@ -1,0 +1,122 @@
+#
+# Automatically generated file; DO NOT EDIT.
+# Bootloader configuration
+#
+
+#
+# Chip
+#
+CONFIG_CHIP_VENDOR="intel"
+CONFIG_CHIP_NAME="quark_se"
+CONFIG_CLOCK=y
+CONFIG_CLOCK_SPEED=32000000
+# CONFIG_OSCILLATOR is not set
+
+#
+# Advanced setup
+#
+
+#
+# Core
+#
+CONFIG_X86=y
+
+#
+# Generic
+#
+CONFIG_BOOTSTRAP=y
+
+#
+# Quark
+#
+CONFIG_CORE_QUARK=y
+
+#
+# Device Drivers
+#
+# CONFIG_WATCHDOG is not set
+
+#
+# Watchdog support disabled
+#
+# CONFIG_USB is not set
+
+#
+# USB support disabled
+#
+# CONFIG_LED is not set
+# CONFIG_PLAY_BOOT_PATTERN is not set
+
+#
+# LED support disabled
+#
+# CONFIG_MISC is not set
+
+#
+# MISC support disabled
+#
+# CONFIG_MTD is not set
+
+#
+# MTD support disabled
+#
+CONFIG_SERIAL=y
+CONFIG_NS16550=y
+CONFIG_XMODEM=y
+# CONFIG_D_FLIP_FLOP is not set
+# CONFIG_SPI is not set
+
+#
+# SPI support disabled
+#
+# CONFIG_I2C is not set
+
+#
+# I2C support disabled
+#
+CONFIG_UART=y
+# CONFIG_GPIO is not set
+
+#
+# General setup
+#
+
+#
+# Binary setup
+#
+# CONFIG_CUSTOM_LINKER_SCRIPT is not set
+CONFIG_BIN_FORMAT=y
+CONFIG_XIP=y
+CONFIG_LOAD_ADDRESS=0x00000000
+CONFIG_BINARY_LENGTH=0x00000000
+CONFIG_RAM_START_ADDRESS=0x00000000
+CONFIG_RAM_MAXIMUM_SIZE=0x00000000
+# CONFIG_BALLOC is not set
+# CONFIG_HARDWARE_CHARGING is not set
+CONFIG_DNX=y
+CONFIG_XMODEM_PACKET_SIZE=1024
+# CONFIG_QUIRKS_FEATURES is not set
+# CONFIG_OPTION_UPDATE is not set
+
+#
+# Update options disabled
+#
+CONFIG_BOOT_OPTION=y
+# CONFIG_ADVANCED_BOOT is not set
+# CONFIG_MANUFACTURING is not set
+# CONFIG_DEBUG is not set
+
+#
+# Debug options disabled
+#
+CONFIG_SECURITY=y
+# CONFIG_SECURE_BOOT_SSBL is not set
+CONFIG_SECURE_BOOT=y
+# CONFIG_SECURE_UPDATE is not set
+CONFIG_CRYPTO=y
+CONFIG_SHARE_CRYPTO=y
+CONFIG_CRYPTO_SHA256=y
+CONFIG_CRYPTO_ECDSA=y
+CONFIG_LIBRARY_ROUTINES=y
+CONFIG_CRC16_CCITT=y
+CONFIG_SIGNATURE_HEADER_SIZE=0x80

@@ -1,0 +1,17 @@
+#
+# USB device configuration
+
+if USB
+	menuconfig USB_DEVICE
+		bool "Device support"
+
+		config USB_DWC_3_10B
+			bool "DWC 3.1B"
+			depends on USB_DEVICE
+
+	comment "Device support disabled"
+		depends on !USB_DEVICE
+endif
+
+comment "USB support disabled"
+	depends on !USB

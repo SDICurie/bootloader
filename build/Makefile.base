@@ -1,0 +1,123 @@
+# Copyright (c) 2015, Intel Corporation. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its contributors
+# may be used to endorse or promote products derived from this software without
+# specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+include $(BOOTLOADER_ROOT)/build/Makefile.version
+include $(BOOTLOADER_ROOT)/build/Makefile.vars
+
+# bsp includes
+TD_BSP_INCS = $(T)/bsp/include
+
+CFLAGS += -Os -m32 -Wall -Wextra -Werror -nostdlib  -ffreestanding -nostartfiles -nodefaultlibs
+
+CFLAGS += -fno-unwind-tables -fno-exceptions -fno-asynchronous-unwind-tables
+CFLAGS += -fdata-sections -ffunction-sections -Wl,--gc-sections
+CFLAGS += -I$(TD_BSP_INCS)
+
+ifeq ($(USE_CHIP_DIR),y)
+CFLAGS += -I$(BOOTLOADER_ROOT)/chip -I$(BOOTLOADER_ROOT)/chip/$(CONFIG_CHIP_NAME)
+endif
+
+CFLAGS += -I$(PROJECT_INCLUDES)
+
+CFLAGS += -include $(KCONFIG_HEADER) -include $(TD_BSP_INCS)/util/compiler.h
+
+$(OUT) $(KBUILD_OUT):
+	$(AT)mkdir -p $@
+
+ifeq ($(CONFIG_CUSTOM_LINKER_SCRIPT),y)
+LD_SCRIPT := $(CONFIG_LINKER_SCRIPT)
+else
+ifneq ($(wildcard $(BOOTLOADER_ROOT)/board/intel/$(BOARD)/$(BOOTLOADER_TARGET).lds),)
+LD_SCRIPT := $(BOOTLOADER_ROOT)/board/intel/$(BOARD)/$(BOOTLOADER_TARGET).lds
+else
+ifneq ($(wildcard $(BOOTLOADER_ROOT)/chip/intel/$(subst ",,$(CONFIG_CHIP_NAME))/$(BOOTLOADER_TARGET).lds),)
+LD_SCRIPT := $(BOOTLOADER_ROOT)/chip/intel/$(subst ",,$(CONFIG_CHIP_NAME))/$(BOOTLOADER_TARGET).lds
+else
+ifneq ($(wildcard $(BOOTLOADER_ROOT)/core/x86/intel/$(BOOTLOADER_TARGET).lds),)
+LD_SCRIPT := $(BOOTLOADER_ROOT)/core/x86/intel/$(BOOTLOADER_TARGET).lds
+else
+$(error No suitable linker script found)
+endif
+endif
+endif
+endif
+
+$(OUT)/%.ld: $(LD_SCRIPT) $(KCONFIG_HEADER) $(OUT)
+	$(AT)echo $(ANSI_RED)"[bPP]"$(ANSI_OFF) $(@:$(OUT)/%=%)
+	$(AT)$(CROSS_COMPILE)gcc -E -P -o $@ -ansi -D__ASSEMBLY__  \
+		-x assembler-with-cpp -P $(LD_SCRIPT) \
+		-I$(BOOTLOADER_ROOT)/include/ \
+		-I$(BOOTLOADER_ROOT)/chip \
+		-I$(BOOTLOADER_ROOT)/core \
+		-I$(TD_BSP_INCS) \
+		-I$(PROJECT_INCLUDES) \
+		-include $(KCONFIG_HEADER) \
+		-Wl,-Map="$(OUT)/%.map"
+
+$(OUT)/%.bin: $(OUT)/%.elf
+	$(AT)echo $(ANSI_RED)"[bX]"$(ANSI_OFF) $(@:$(OUT)/%=%)
+	$(AT)$(OBJCOPY) -O binary $< $@
+	$(AT)$(BINARY_VERSION_HEADER) \
+		--major $(VERSION_MAJOR) \
+		--minor $(VERSION_MINOR) \
+		--patch $(VERSION_PATCH) \
+		--version_string $(PROJECT_SHORT_CODE)LAKBLR-$(VERSION_STRING_SUFFIX) \
+		$@ $(DEV_NULL)
+
+$(KBUILD_OUT)/built-in.o: FORCE $(KCONFIG_FILE) $(KCONFIG_HEADER)
+	$(AT)+$(MAKE) -C $(BOOTLOADER_ROOT)/ -f $(BOOTLOADER_ROOT)/build/Makefile.build \
+		SRC=. \
+		INC_ROOT=include \
+		OUT=$(KBUILD_OUT) \
+		KCONFIG=$(KCONFIG_FILE) \
+		KCONFIG_AUTOHEADER=$(KBUILD_OUT) \
+		CFLAGS="$(CFLAGS) $(EXTRA_BUILD_CFLAGS)" \
+		CC=$(CC) \
+		AR=$(AR) \
+		LD=$(LD)
+
+$(OUT)/%.bin: $(OUT)/%.elf
+	$(AT)echo $(ANSI_RED)"[bX]"$(ANSI_OFF) $(@:$(OUT)/%=%)
+	$(AT)$(OBJCOPY) -O binary $< $@
+	$(AT)$(BINARY_VERSION_HEADER) \
+		--major $(VERSION_MAJOR) \
+		--minor $(VERSION_MINOR) \
+		--patch $(VERSION_PATCH) \
+		--version_string $(PROJECT_SHORT_CODE)LAKBLR-$(VERSION_STRING_SUFFIX) \
+		$@ $(DEV_NULL)
+
+$(KCONFIG_HEADER): $(KCONFIG_FILE)
+	$(AT)mkdir -p $(KBUILD_OUT)
+	@echo "Creating Kconfig header:" $@
+	$(AT)sed $< -e 's/#.*//' > $@
+	$(AT)sed -i $@ -e 's/\(CONFIG_.*\)=/#define \1 /'
+# Kconfig uses #define CONFIG_XX 1 instead of CONFIG_XX y for booleans
+	$(AT)sed -i $@ -e 's/ y$$/ 1/'
+
+FORCE:
+
