@@ -230,7 +230,7 @@ void weak_boot(enum wake_sources wake_source, enum reset_reasons reset_reason,
 #endif
 
 #if defined(CONFIG_SYSTEM_EVENTS)
-	system_event_push_boot_event(reset_reason);
+	system_event_push_boot_event(reset_reason, boot_target);
 #endif
 
 	if (boot_target < ARRAY_SIZE(do_boot))

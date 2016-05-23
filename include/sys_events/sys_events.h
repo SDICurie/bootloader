@@ -44,8 +44,9 @@
  * Boot event data
  */
 struct event_data_boot {
-	uint8_t reason;     /*!< Boot reason */
 	uint32_t uptime;    /*!< Uptime in sec */
+	uint8_t reason;     /*!< Boot reason */
+	uint8_t target;     /*!< Boot target */
 } __packed;
 
 /**
@@ -185,9 +186,10 @@ struct system_event *system_event_pop(void);
 /**
  * Push a boot system event in the buffer.
  *
- * @param boot_targets the boot target we want to push in the buffer
+ * @param reset_reason the reset reason we want to push in the buffer
+ * @param boot_target the boot target we want to push in the buffer
  */
-void system_event_push_boot_event(enum reset_reasons);
+void system_event_push_boot_event(enum reset_reasons reset_reason, enum boot_targets boot_target);
 
 /**
  * Push a shutdown system event in the buffer.
