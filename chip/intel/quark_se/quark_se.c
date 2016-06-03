@@ -482,7 +482,7 @@ void dfu_customer_otp_write(struct dfu_ops *ops)
 	ret = soc_rom_block_erase(0, 1);
 	ret |=
 		soc_rom_write(address + 4, (PAGE_SIZE - 4) / 4, &retlen,
-			      (uint32_t *)data + 4);
+			      (uint32_t *)data + 1);
 	if (ret == DRV_RC_OK) {
 		ops->state = dfuDNLOAD_IDLE;
 	} else {
