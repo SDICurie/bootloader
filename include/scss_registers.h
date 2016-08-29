@@ -59,6 +59,10 @@
 /* USB clock enable bit */
 #define CCU_USB_CLK_EN (0x2)
 
+#define QRK_PMUX_PULLUP_0               0XB0800900
+#define QRK_PMUX_PULLUP_1               0XB0800904
+#define QRK_PMUX_PULLUP_2               0XB0800908
+#define QRK_PMUX_PULLUP_3               0XB080090C
 #define QRK_PMUX_SELECT_0               0XB0800930
 #define QRK_PMUX_SELECT_1               0XB0800934
 #define QRK_PMUX_SELECT_2               0XB0800938
@@ -70,6 +74,9 @@
 #define QRK_PMUX_SEL_MODEB              1
 #define QRK_PMUX_SEL_MODEC              2
 #define QRK_PMUX_SEL_MODED              3
+
+#define QRK_PMUX_PULLUP_DISABLED        0
+#define QRK_PMUX_PULLUP_ENABLED         1
 
 #define SCSS_REGISTER_BASE              0xB0800000
 #define SCSS_REG_VAL(offset) \
@@ -328,6 +335,18 @@
 #define INT_DMA_CHANNEL_6_MASK_REG      (0x498)
 #define INT_DMA_CHANNEL_7_MASK_REG      (0x49C)
 #define INT_DMA_ERROR_MASK_REG          (0x4B8)
+
+#define PULLUP_BASE    QRK_PMUX_PULLUP_0
+/* Read current pull-up reg, Zero pin bit, OR new mode into these bits, write reg - thereby preserving other pin mode settings */
+#define SET_PULLUP_REG(mux_reg, enable,	\
+		       pin) MMIO_REG_VAL(mux_reg) = \
+	(MMIO_REG_VAL(mux_reg) & ~(1 << (pin))) | ((enable) << (pin))
+/* Calculate mux register address from pin number and calculate pin number within that register - call SET_MUX_REG */
+#define SET_PIN_PULLUP(pin_no, \
+		       enable) SET_PULLUP_REG(((((pin_no) / \
+						 32) * 4) + PULLUP_BASE), \
+					      (enable),	\
+					      (pin_no) % 32)
 
 
 /* Pin Muxing */
