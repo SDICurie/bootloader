@@ -31,6 +31,9 @@
 #ifndef __USB_SETUP_H__
 #define __USB_SETUP_H__
 
+#define VENABLE_USB_REGULATOR   28
+#define USB_STATUS_PIN          7
+
 /**
  * Do the SoC-specific USB initialization
  *

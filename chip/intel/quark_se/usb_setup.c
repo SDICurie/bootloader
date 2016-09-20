@@ -35,18 +35,14 @@
 #include "printk.h"
 #include "utils.h"
 #include <time.h>
-
+#include "usb_setup.h"
 #include "usb/usb_api.h"
-
-#define VENABLE_USB_REGULATOR   28
 
 /**
  * Enables USB driver clock and regulator.
  */
 static void enable_usb()
 {
-	gpio_cfg_data_t config;
-
 	/* Setup and turn on USB PLL */
 	MMIO_REG_VAL(USB_PLL_CFG0) = USB_PLL_CFG0_DEFAULT | USB_PLL_PDLD;
 
@@ -61,8 +57,6 @@ static void enable_usb()
 	pr_info("USB PLL Configured count: %d\n", count);
 
 	/* activate regulator after USB clocks are stabilized */
-	config.gpio_type = GPIO_OUTPUT;
-	gpio_set_config(SOC_GPIO_32, VENABLE_USB_REGULATOR, &config);
 	gpio_write(SOC_GPIO_32, VENABLE_USB_REGULATOR, 1);
 }
 
@@ -89,7 +83,7 @@ void platform_usb_release()
 	MMIO_REG_VAL(USB_PLL_CFG0) &= ~USB_PLL_PDLD;
 
 	/* Disable regulator */
-	gpio_write(SOC_GPIO_32, 28, 0);
+	gpio_write(SOC_GPIO_32, VENABLE_USB_REGULATOR, 0);
 }
 
 void poll_usb(void)

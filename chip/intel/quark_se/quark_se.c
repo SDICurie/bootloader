@@ -224,7 +224,7 @@ void soc_init(void)
 	usb_driver_os_dep->alloc = usb_balloc;
 	usb_driver_os_dep->free = bfree;
 
-	SET_PIN_MODE(7, QRK_PMUX_SEL_MODEA);
+	SET_PIN_MODE(USB_STATUS_PIN, QRK_PMUX_SEL_MODEA);
 
 	gpio_cfg_data_t pin_cfg = {
 		.gpio_type = GPIO_INPUT,
@@ -235,12 +235,16 @@ void soc_init(void)
 		.gpio_cb = NULL
 	};
 
-	if ((gpio_set_config(0, 7, &pin_cfg))
+	if ((gpio_set_config(0, USB_STATUS_PIN, &pin_cfg))
 	    != DRV_RC_OK)
 		pr_info("error configure gpio\n");
-	usb_gpio = gpio_read(0, 7);
+	usb_gpio = gpio_read(0, USB_STATUS_PIN);
 
 	pr_info("usb status: %d\n", usb_gpio);
+
+	/* Configure USB regulator pin to output */
+	pin_cfg.gpio_type = GPIO_OUTPUT;
+	gpio_set_config(SOC_GPIO_32, VENABLE_USB_REGULATOR, &pin_cfg);
 #endif
 
 #if defined(CONFIG_SWD)
