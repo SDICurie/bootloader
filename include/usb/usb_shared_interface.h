@@ -100,6 +100,7 @@ struct usb_interface {
 	int (*usb_interface_init)(struct usb_interface_init_data *init_data);
 	int (*usb_ep_read)(int ep_address, uint8_t *buf, int len, void *priv);
 	int (*usb_ep_write)(int ep_address, uint8_t *buf, int len, void *priv);
+	int (*usb_ep_stall)(int ep_address, int len, void *priv);
 	int (*usb_ep_disable)(int ep_address);
 	int (*usb_get_config)(void);
 	void (*usb_isr)(void);

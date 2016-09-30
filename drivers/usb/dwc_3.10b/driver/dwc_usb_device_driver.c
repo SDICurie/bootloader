@@ -186,6 +186,11 @@ int usb_ep_write(int ep_address, uint8_t *buf, int len, void *priv)
 				    len, 0, priv, 0);
 }
 
+int usb_ep_stall(int ep_address, int value, void *priv)
+{
+	return dwc_otg_pcd_ep_halt(dwc_otg_device->pcd, ep_address, value);
+}
+
 int usb_get_config()
 {
 	return static_data->usb_config;

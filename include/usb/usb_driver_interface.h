@@ -209,6 +209,19 @@ int usb_ep_write(int ep_address, uint8_t *buf, int len, void *priv);
 int usb_ep_disable(int ep_address);
 
 /**
+ * Stall an endpoint or clear it
+ *
+ * This function should be called by the function driver whenever there is a stall condition occurred
+ *
+ * @param ep_address the endpoint address of the endpoint to stall.
+ * @param value 1 - for stalling endpoint, 0 - to clear stalling endpoint
+ * @param priv a private pointer passed in the ep_complete() callback
+ *
+ * @return 0 if no error occured.
+ */
+int usb_ep_stall(int ep_address, int value, void *priv);
+
+/**
  * get currently selected configuration.
  *
  * This function returns the currently selected configuration.
