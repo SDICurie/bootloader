@@ -51,6 +51,9 @@
 #elif defined(CONFIG_SPI_FLASH_MX25R1635F)
 #define FLASH_RDID_VALUE      (0x001528c2)
 #define FLASH_SIZE            (0x200000) // memory size in bytes (2097152)
+#elif defined(CONFIG_SPI_FLASH_MX25R6435F)
+#define FLASH_RDID_VALUE      (0x001728c2)
+#define FLASH_SIZE            (0x800000) // memory size in bytes (8388608)
 #else
 #error "Unsupported MX25 spi nor flash"
 #endif

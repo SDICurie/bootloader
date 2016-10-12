@@ -24,6 +24,10 @@ if MTD
 		config SPI_FLASH_MX25R1635F
 			bool "SPI NOR Flash Macronix MX25R1635F on Intel QRK"
 			select SPI_FLASH_MX25
+
+		config SPI_FLASH_MX25R6435F
+			bool "SPI NOR Flash Macronix MX25R6435F on Intel QRK"
+			select SPI_FLASH_MX25
 	endchoice
 
 	comment "SNOR support disabled"
