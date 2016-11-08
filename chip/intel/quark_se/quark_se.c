@@ -66,6 +66,7 @@
 
 
 #include <printk.h>
+#include <api/part.h>
 #include <partition.h>
 #include <gpio.h>
 #include <uart.h>
@@ -264,6 +265,8 @@ void soc_init(void)
 	if ((MMIO_REG_VAL_FROM_BASE(SCSS_REGISTER_BASE,
 				    SLP_CFG_BASE) & 0x4) == 0)
 		board_feature_enable(HW_IDLE_QUIRK);
+	/* init ram shared partition table */
+	partitions_init();
 #endif
 }
 

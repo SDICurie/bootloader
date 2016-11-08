@@ -2003,6 +2003,7 @@ static inline void pcd_setup(dwc_otg_pcd_t *pcd)
 
 	case UR_CLEAR_FEATURE:
 		do_clear_feature(pcd);
+		do_gadget_setup(pcd, &ctrl);			/* MSC device need CLEAR_FEATURE callback */
 		break;
 
 	case UR_SET_FEATURE:

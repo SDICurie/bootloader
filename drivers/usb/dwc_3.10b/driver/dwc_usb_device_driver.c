@@ -272,195 +272,201 @@ static int _setup(dwc_otg_pcd_t *pcd, uint8_t *bytes)
 	 * but config change events will reconfigure hardware.
 	 */
 	static_data->dl_req.data.zero = 0;
-	if (UT_GET_RECIPIENT(ctrl->bmRequestType) == UT_INTERFACE) {
-		if ((UT_GET_DIR(ctrl->bmRequestType) == UT_WRITE)
-		    && (UGETW(ctrl->wLength) > 0)) {
-			static_data->dl_req.data.buf =
-				&static_data->ep0_buffer[0];
-			DWC_MEMCPY(&static_data->dl_req.out_req, ctrl,
-				   sizeof(*ctrl));
-			static_data->dl_req.data.length =
-				DWC_MIN(UGETW(
-						ctrl->wLength),
-					static_data->ep0_buffer_size);
+
+	if(UT_GET_RECIPIENT(ctrl->bmRequestType) == UT_ENDPOINT) {
+		static_data->usb_class_handler(ctrl, &value, NULL);		
+		value = 0;
+	}
+	else {
+		if (UT_GET_RECIPIENT(ctrl->bmRequestType) == UT_INTERFACE) {
+			if ((UT_GET_DIR(ctrl->bmRequestType) == UT_WRITE)
+			    && (UGETW(ctrl->wLength) > 0)) {
+				static_data->dl_req.data.buf =
+					&static_data->ep0_buffer[0];
+				DWC_MEMCPY(&static_data->dl_req.out_req, ctrl,
+					   sizeof(*ctrl));
+				static_data->dl_req.data.length =
+					DWC_MIN(UGETW(
+							ctrl->wLength),
+						static_data->ep0_buffer_size);
+
+				// either shorter than asked, or multiple of the MPS require ZLP.
+				static_data->dl_req.data.zero =
+					((value < UGETW(ctrl->wLength))
+					 &&
+					 ((value %
+					   pcd->ep0.dwc_ep.
+					   maxpacket) ==
+					  0)) ? 1 : 0;
+
+				// Elaborate when getting the time.
+				dwc_otg_pcd_ep_queue(
+					pcd, /*void* ep_hanlde */ NULL,
+					static_data->dl_req.data.buf,
+					(dwc_dma_t)static_data->dl_req.
+					data.buf,
+					static_data->dl_req.data.length,
+					static_data->dl_req.data.zero,
+					/*void* req_handle */ &static_data
+					->dl_req, 0);
+			} else {
+				static_data->dl_req.data.buf =
+					&static_data->ep0_buffer[0];
+				if (static_data->usb_class_handler(ctrl, &value,
+								   &static_data->dl_req
+								   .data.buf) != 0) {
+					value = -DWC_E_NOT_SUPPORTED;
+				}
+			}
+		} else {
+			switch (ctrl->bRequest) {
+			case UR_GET_DESCRIPTOR:
+				__DWC_ERROR("ctrl->Length = %d \n",
+					    UGETW(ctrl->wLength));
+
+				switch (UGETW(ctrl->wValue) >> 8) {
+				case UDESC_DEVICE:
+					value =
+						DWC_MIN(UGETW(ctrl->wLength),
+							USB_DEVICE_DESCRIPTOR_SIZE);
+					static_data->dl_req.data.buf = (uint8_t *)
+								       static_data->
+								       usb_device_descriptor;
+
+					break;
+
+				case UDESC_CONFIG:
+					value = DWC_MIN(UGETW(ctrl->wLength),
+							UGETW(static_data->
+							      usb_config_descriptor->
+							      wTotalLength));
+					static_data->dl_req.data.buf = (uint8_t *)
+								       static_data->
+								       usb_config_descriptor;
+
+					break;
+
+				case UDESC_OTHER_SPEED_CONFIGURATION:
+					__DWC_ERROR
+					(
+						"UDESC_OTHER_SPEED_CONFIGURATION NOT IMPLEMENTED! \n");
+					break;
+
+				case UDESC_STRING:
+					/* wIndex == language code.
+					 * this driver only handles one language, you can
+					 * add string tables for other languages, using
+					 * any UTF-8 characters
+					 */
+					idx = UGETW(ctrl->wValue) & 0xFF;
+					__DWC_ERROR("UDESC_STRING idx = %d \n", idx);
+					__DWC_ERROR(
+						"UDESC_STRING bLength = %d \n",
+						&static_data->strings_desc[idx].
+						bLength);
+					if (idx > static_data->usb_strings_count) {
+						if (idx == 0xEE) {
+							// Microsoft MTP extension
+							value = 0;
+						} else {
+							value = -DWC_E_INVALID;
+						}
+					} else {
+						value = DWC_MIN(UGETW(
+									ctrl->wLength),
+								static_data->
+								strings_desc[idx].
+								bLength);
+						static_data->dl_req.data.buf =
+							(uint8_t *)
+							&
+							static_data->strings_desc[idx];
+					}
+
+					break;
+				}
+				break;
+
+			case UR_SET_CONFIG:
+				static_data->usb_config = UGETW(ctrl->wValue);
+				value = 0;
+
+				{
+					int i;
+					for (i = 0;
+					     i < static_data->usb_num_endpoints;
+					     i++) {
+						int ret = dwc_otg_pcd_ep_enable(
+							pcd,
+							(const
+							 uint8_t
+							 *)&static_data->usb_endpoints[
+								i],
+							static_data
+							->usb_endpoints[i].
+							bEndpointAddress);
+						__DWC_WARN(
+							"Enabled endpoint: %x ret: %d\n",
+							static_data->usb_endpoints[i
+							].bEndpointAddress,
+							ret);
+					}
+					struct usb_event evt;
+					evt.event = USB_EVENT_SET_CONFIG;
+					evt.event_data.config = static_data->usb_config;
+					if (static_data->usb_event_cb) {
+						static_data->usb_event_cb(&evt);
+					}
+				}
+
+				break;
+			case UR_GET_CONFIG:
+				static_data->dl_req.data.buf = &static_data->usb_config;
+				value = DWC_MIN(UGETW(ctrl->wLength), 1);
+				break;
+
+			/* until we add altsetting support, or other interfaces,
+			 * only 0/0 are possible.  pxa2xx only supports 0/0 (poorly)
+			 * and already killed pending endpoint I/O.
+			 */
+			case UR_SET_INTERFACE:
+				value = 0;
+				break;
+
+			case UR_GET_INTERFACE:
+				__DWC_ERROR("UR_GET_INTERFACE NOT IMPLEMENTED! \n");
+				goto unknown;
+				break;
+
+			default:
+	unknown:
+
+				value = -DWC_E_NOT_SUPPORTED;
+				break;
+			}
+		}
+		/* respond with data transfer before status phase? */
+		__DWC_ERROR("%s(): req.length = %d - max length is 64 \n", __func__,
+			    value);
+		if (value >= 0) {
+			static_data->dl_req.data.length = value;
 
 			// either shorter than asked, or multiple of the MPS require ZLP.
-			static_data->dl_req.data.zero =
-				((value < UGETW(ctrl->wLength))
-				 &&
-				 ((value %
-				   pcd->ep0.dwc_ep.
-				   maxpacket) ==
-				  0)) ? 1 : 0;
+			static_data->dl_req.data.zero = ((value < UGETW(ctrl->wLength))
+							 && ((value %
+							      pcd->ep0.dwc_ep.maxpacket)
+							     ==
+							     0)) ? 1 : 0;
 
 			// Elaborate when getting the time.
-			dwc_otg_pcd_ep_queue(
-				pcd, /*void* ep_hanlde */ NULL,
-				static_data->dl_req.data.buf,
-				(dwc_dma_t)static_data->dl_req.
-				data.buf,
-				static_data->dl_req.data.length,
-				static_data->dl_req.data.zero,
-			        /*void* req_handle */ &static_data
-				->dl_req, 0);
-		} else {
-			static_data->dl_req.data.buf =
-				&static_data->ep0_buffer[0];
-			if (static_data->usb_class_handler(ctrl, &value,
-							   &static_data->dl_req
-							   .data.buf) != 0) {
-				value = -DWC_E_NOT_SUPPORTED;
-			}
-		}
-	} else {
-		switch (ctrl->bRequest) {
-		case UR_GET_DESCRIPTOR:
-			__DWC_ERROR("ctrl->Length = %d \n",
-				    UGETW(ctrl->wLength));
-
-			switch (UGETW(ctrl->wValue) >> 8) {
-			case UDESC_DEVICE:
-				value =
-					DWC_MIN(UGETW(ctrl->wLength),
-						USB_DEVICE_DESCRIPTOR_SIZE);
-				static_data->dl_req.data.buf = (uint8_t *)
-							       static_data->
-							       usb_device_descriptor;
-
-				break;
-
-			case UDESC_CONFIG:
-				value = DWC_MIN(UGETW(ctrl->wLength),
-						UGETW(static_data->
-						      usb_config_descriptor->
-						      wTotalLength));
-				static_data->dl_req.data.buf = (uint8_t *)
-							       static_data->
-							       usb_config_descriptor;
-
-				break;
-
-			case UDESC_OTHER_SPEED_CONFIGURATION:
-				__DWC_ERROR
-				(
-					"UDESC_OTHER_SPEED_CONFIGURATION NOT IMPLEMENTED! \n");
-				break;
-
-			case UDESC_STRING:
-				/* wIndex == language code.
-				 * this driver only handles one language, you can
-				 * add string tables for other languages, using
-				 * any UTF-8 characters
-				 */
-				idx = UGETW(ctrl->wValue) & 0xFF;
-				__DWC_ERROR("UDESC_STRING idx = %d \n", idx);
-				__DWC_ERROR(
-					"UDESC_STRING bLength = %d \n",
-					&static_data->strings_desc[idx].
-					bLength);
-				if (idx > static_data->usb_strings_count) {
-					if (idx == 0xEE) {
-						// Microsoft MTP extension
-						value = 0;
-					} else {
-						value = -DWC_E_INVALID;
-					}
-				} else {
-					value = DWC_MIN(UGETW(
-								ctrl->wLength),
-							static_data->
-							strings_desc[idx].
-							bLength);
-					static_data->dl_req.data.buf =
-						(uint8_t *)
-						&
-						static_data->strings_desc[idx];
-				}
-
-				break;
-			}
-			break;
-
-		case UR_SET_CONFIG:
-			static_data->usb_config = UGETW(ctrl->wValue);
-			value = 0;
-
-			{
-				int i;
-				for (i = 0;
-				     i < static_data->usb_num_endpoints;
-				     i++) {
-					int ret = dwc_otg_pcd_ep_enable(
-						pcd,
-						(const
-						 uint8_t
-						 *)&static_data->usb_endpoints[
-							i],
-						static_data
-						->usb_endpoints[i].
-						bEndpointAddress);
-					__DWC_WARN(
-						"Enabled endpoint: %x ret: %d\n",
-						static_data->usb_endpoints[i
-						].bEndpointAddress,
-						ret);
-				}
-				struct usb_event evt;
-				evt.event = USB_EVENT_SET_CONFIG;
-				evt.event_data.config = static_data->usb_config;
-				if (static_data->usb_event_cb) {
-					static_data->usb_event_cb(&evt);
-				}
-			}
-
-			break;
-		case UR_GET_CONFIG:
-			static_data->dl_req.data.buf = &static_data->usb_config;
-			value = DWC_MIN(UGETW(ctrl->wLength), 1);
-			break;
-
-		/* until we add altsetting support, or other interfaces,
-		 * only 0/0 are possible.  pxa2xx only supports 0/0 (poorly)
-		 * and already killed pending endpoint I/O.
-		 */
-		case UR_SET_INTERFACE:
-			value = 0;
-			break;
-
-		case UR_GET_INTERFACE:
-			__DWC_ERROR("UR_GET_INTERFACE NOT IMPLEMENTED! \n");
-			goto unknown;
-			break;
-
-		default:
-unknown:
-
-			value = -DWC_E_NOT_SUPPORTED;
-			break;
+			dwc_otg_pcd_ep_queue(pcd, /*void* ep_hanlde */ NULL,
+					     static_data->dl_req.data.buf,
+					     (dwc_dma_t)static_data->dl_req.data.buf,
+					     static_data->dl_req.data.length,
+					     static_data->dl_req.data.zero,
+				             /*void* req_handle */ NULL, 0);
 		}
 	}
-	/* respond with data transfer before status phase? */
-	__DWC_ERROR("%s(): req.length = %d - max length is 64 \n", __func__,
-		    value);
-	if (value >= 0) {
-		static_data->dl_req.data.length = value;
-
-		// either shorter than asked, or multiple of the MPS require ZLP.
-		static_data->dl_req.data.zero = ((value < UGETW(ctrl->wLength))
-						 && ((value %
-						      pcd->ep0.dwc_ep.maxpacket)
-						     ==
-						     0)) ? 1 : 0;
-
-		// Elaborate when getting the time.
-		dwc_otg_pcd_ep_queue(pcd, /*void* ep_hanlde */ NULL,
-				     static_data->dl_req.data.buf,
-				     (dwc_dma_t)static_data->dl_req.data.buf,
-				     static_data->dl_req.data.length,
-				     static_data->dl_req.data.zero,
-		                     /*void* req_handle */ NULL, 0);
-	}
-
 	/* device either stalls (value < 0) or reports success */
 	return value;
 }
@@ -716,6 +722,7 @@ const struct usb_interface intf_inst = {
 	.usb_interface_init = usb_interface_init,
 	.usb_ep_read = usb_ep_read,
 	.usb_ep_write = usb_ep_write,
+	.usb_ep_stall = usb_ep_stall,
 	.usb_ep_disable = usb_ep_disable,
 	.usb_get_config = usb_get_config,
 	.usb_isr = usb_ISR,

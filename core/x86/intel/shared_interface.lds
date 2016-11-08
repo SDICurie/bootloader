@@ -55,4 +55,20 @@ __bss_security_shared_end = .;
 
 __bss_security_shared_num_words = (__bss_security_shared_end - __bss_security_shared_start) >> 2;
 
-_init_shared_data_end = _init_shared_data_start + __security_shared_data_size;
+/* partitions shared if partition*/
+. = ORIGIN(PARTITION_SHARED);
+. = ALIGN(4);
+
+.partition_shared_if : AT ( _init_shared_data_start + __security_shared_data_size )
+{
+__partition_shared_data_start = .;
+__partition_shared_data_lma = LOADADDR(.partition_shared_if); __partition_shared_data_vma = .;
+/* Here we will pass the partition table */
+KEEP(*(.table_partition))
+. = ALIGN(4);
+} > PARTITION_SHARED
+
+__partition_shared_data_size = SIZEOF( .partition_shared_if );
+
+
+_init_shared_data_end = _init_shared_data_start + __security_shared_data_size + __partition_shared_data_size ;

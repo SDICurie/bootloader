@@ -9,3 +9,4 @@ obj-$(CONFIG_PANIC_DUMP) += panic_boot.o
 obj-$(CONFIG_HARDWARE_CHARGING) += cos.o hardware_charging.o
 obj-$(CONFIG_OTA) += boot_ota.o ota_partition.o lzgdecode.o
 obj-$(CONFIG_USB_DFU) += dfu_desc.o dfu_spi_flash.o
+obj-$(CONFIG_ADVANCED_BOOT) += partition.o

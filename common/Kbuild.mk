@@ -4,7 +4,7 @@ obj-y += bootlogic.o
 obj-$(CONFIG_CRC16_CCITT) += crc16_ccitt.o
 obj-$(CONFIG_CRC32) += crc32.o
 obj-y += utils.o
-
+obj-y += part.o
 obj-$(CONFIG_FACTORY_BOOT) +=  factory.o
 obj-$(CONFIG_BALLOC) += balloc.o
 obj-$(CONFIG_PRINTK) += printk.o

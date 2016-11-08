@@ -87,7 +87,16 @@ __start:
 	movl $__bss_security_shared_num_words, %ecx	/* number of quad bytes */
 	cld
 	rep
-	stosl	
+	stosl
+
+	/* copy partition table shared if */
+	movl $__partition_shared_data_size, %ecx
+	shr $2, %ecx
+	movl $__partition_shared_data_vma, %edi
+	movl $__partition_shared_data_lma, %esi
+	cld
+	rep movsl
+
 #endif
 
 	/* copy initialised variables */
